@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spell Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .presentation-container {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            min-height: 90vh;
+            padding: 60px 50px;
+            background: white;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide h1 {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .slide h2 {
+            font-size: 2.2em;
+            color: #667eea;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        .slide h3 {
+            font-size: 1.6em;
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .slide p {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .slide pre {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .slide code {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1em;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        tr:hover {
+            background: #f0f0f0;
+        }
+
+        .timing {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .highlight {
+            background: #fff9e6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .bottleneck {
+            background: #ffe6e6;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success {
+            background: #e6f7e6;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            font-size: 1em;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .slide-title {
+            font-size: 2.5em;
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            color: #764ba2;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .authors {
+            font-size: 1.2em;
+            color: #666;
+            text-align: center;
+            margin-top: 60px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .math {
+            font-style: italic;
+            color: #764ba2;
+            font-weight: 600;
+        }
+
+        .edge-case-list {
+            margin-left: 20px;
+        }
+
+        .edge-case-list li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .algorithm-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                padding: 40px 25px;
+            }
+            .slide h1 { font-size: 2em; }
+            .slide h2 { font-size: 1.6em; }
+            .slide p { font-size: 1em; }
+        }
+
+        @media print {
+            body { background: white; }
+            .presentation-container { box-shadow: none; }
+            .controls { display: none; }
+            .slide { page-break-after: always; min-height: 100vh; }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- SLIDE 1: TITLE -->
+        <div class="slide active">
+            <div style="text-align: center; padding-top: 100px;">
+                <h1 style="font-size: 3.5em; margin-bottom: 20px;">🔍 Spell Checker</h1>
+                <p style="font-size: 2em; color: #764ba2; margin-bottom: 30px;">3-Stage Algorithm Pipeline</p>
+                <p style="font-size: 1.3em; color: #666; margin-bottom: 50px;">A Deep Dive into Algorithmic Design</p>
+                <p class="authors">Osman Aliyev, Łukasz Madej</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: PROBLEM STATEMENT (0:00-0:30) -->
+        <div class="slide">
+            <h2>🎯 The Challenge</h2>
+            <p>Users type words incorrectly. How do we suggest the right correction <span class="highlight">efficiently</span>?</p>
+
+            <div class="algorithm-box">
+                <strong>Example:</strong><br>
+                Input: <code>"recieve"</code><br>
+                Output: <code>"receive"</code>
+            </div>
+
+            <h3>System Objective</h3>
+            <ul>
+                <li>✅ Detect misspelled words <strong>instantly</strong></li>
+                <li>✅ Suggest the <strong>most likely</strong> correction</li>
+                <li>✅ Handle single-letter errors, transpositions, phonetic variations</li>
+                <li>✅ Scale to 500+ word dictionary with <strong>sub-millisecond</strong> response time</li>
+            </ul>
+
+            <h3>Why It Matters</h3>
+            <p>Naive approach: Compare against all dictionary words = <span class="math">O(D × m × n)</span> where <strong>D</strong> = dictionary size, <strong>m, n</strong> = word lengths.</p>
+            <p><strong>Solution:</strong> A 3-stage pipeline that filters progressively at each stage.</p>
+        </div>
+
+        <!-- SLIDE 3: DATA INPUT & EDGE CASES (0:30-1:30) -->
+        <div class="slide">
+            <h2>📊 Input Format</h2>
+            <ul>
+                <li><strong>Type:</strong> String (single word)</li>
+                <li><strong>Format:</strong> Case-insensitive (normalized to lowercase)</li>
+            </ul>
+
+            <h2>📤 Expected Output</h2>
+            <pre>{
+  "word": "recieve",
+  "is_correct": false,
+  "suggestions": ["receive", "believe", ...],
+  "confidence": "high"
+}</pre>
+
+            <h2>🚨 Edge Cases Handled</h2>
+            <table>
+                <tr>
+                    <th>Edge Case</th>
+                    <th>Behavior</th>
+                    <th>Strategy</th>
+                </tr>
+                <tr>
+                    <td><strong>Empty input</strong></td>
+                    <td>Skip all stages</td>
+                    <td>Early exit</td>
+                </tr>
+                <tr>
+                    <td><strong>Already correct</strong></td>
+                    <td>Return immediately</td>
+                    <td>Early termination</td>
+                </tr>
+                <tr>
+                    <td><strong>No close matches</strong></td>
+                    <td>Return empty suggestions</td>
+                    <td>Graceful degradation</td>
+                </tr>
+                <tr>
+                    <td><strong>Compound errors</strong></td>
+                    <td>Caught at distance 2</td>
+                    <td>Two-layer generation</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- SLIDE 4: ALGORITHM A -->
+        <div class="slide">
+            <h2>Algorithm A: Hash-Based Dictionary Lookup</h2>
+
+            <div class="algorithm-box">
+                <strong>Role:</strong> Fast-path filter — Is the word already correct?<br><br>
+                <strong>Data Structure:</strong> Python <code>set</code> (hash table)<br>
+                <strong>Time Complexity:</strong> <span class="math">Θ(1)</span> average case<br>
+                <strong>Space Complexity:</strong> <span class="math">O(V)</span> where V = vocabulary size (554 words)
+            </div>
+
+            <h3>Why This Complexity?</h3>
+            <ul>
+                <li>Hash sets use uniform hashing with <span class="math">O(1)</span> amortized insertion/lookup</li>
+                <li>Collision resolution (chaining/probing) keeps operations constant on average</li>
+                <li><strong>No sorting or traversal needed</strong></li>
+            </ul>
+
+            <h3>Example Flow</h3>
+            <ul>
+                <li>✅ Input <code>"receive"</code> → Found in hash set → Output "is_correct: true"</li>
+                <li>❌ Input <code>"recieve"</code> → Not found → Continue to Stage B</li>
+            </ul>
+        </div>
+
+        <!-- SLIDE 5: ALGORITHM B PART 1 -->
+        <div class="slide">
+            <h2>Algorithm B: Edit Distance Candidate Generation</h2>
+
+            <p><strong>Role:</strong> Generate plausible corrections using Levenshtein distance</p>
+
+            <h3>Two-Layer Strategy</h3>
+
+            <h4 style="color: #667eea; margin-top: 20px;">Layer 1 — Distance 1 (Typo Candidates)</h4>
+            <p>Generate ALL strings exactly one edit operation away:</p>
+            <ul>
+                <li><strong>Delete:</strong> each character</li>
+                <li><strong>Insert:</strong> each letter a-z at each position</li>
+                <li><strong>Replace:</strong> each character</li>
+                <li><strong>Transpose:</strong> adjacent pairs → <span class="highlight">"recieve" → "receive" ✅</span></li>
+            </ul>
+
+            <p><strong>Time:</strong> <span class="math">O(L² × 26)</span> where L = word length</p>
+
+            <h4 style="color: #667eea; margin-top: 20px;">Layer 2 — Distance 2 (Harder Errors)</h4>
+            <p>Apply Layer 1 edits to each candidate. Catches errors like "recieve" → "believe"</p>
+            <p><strong>Time:</strong> <span class="math">O(L⁴)</span> but heavily pruned by dictionary membership</p>
+        </div>
+
+        <!-- SLIDE 6: ALGORITHM B PART 2 -->
+        <div class="slide">
+            <h2>Algorithm B (continued): Levenshtein Distance DP</h2>
+
+            <h3>Dynamic Programming Approach</h3>
+            <p>Compute actual edit distance between input and each dictionary candidate.</p>
+
+            <pre>DP Recurrence:
+If characters match: dp[i][j] = dp[i-1][j-1]
+Else: dp[i][j] = 1 + min(
+    dp[i-1][j],      // deletion
+    dp[i][j-1],      // insertion
+    dp[i-1][j-1]     // substitution
+)</pre>
+
+            <div class="algorithm-box">
+                <strong>Time per pair:</strong> <span class="math">O(m × n)</span> where m, n = word lengths<br>
+                <strong>Space Optimization:</strong> Use 2 rows instead of full matrix → <span class="math">O(min(m,n))</span>
+            </div>
+
+            <h3>Why This Complexity?</h3>
+            <ul>
+                <li>DP avoids recomputation via memoization</li>
+                <li>Without DP: exponential recomputation</li>
+                <li>With DP: each cell computed once</li>
+                <li>Two-layer filtering reduces comparisons from 554 to ~50 candidates</li>
+            </ul>
+        </div>
+
+        <!-- SLIDE 7: ALGORITHM C -->
+        <div class="slide">
+            <h2>Algorithm C: Heap-Based Top-K Ranking</h2>
+
+            <div class="algorithm-box">
+                <strong>Role:</strong> Select top suggestions sorted by edit distance (primary) and frequency (tiebreaker)<br><br>
+                <strong>Data Structure:</strong> Binary min-heap (<code>heapq.nsmallest</code>)<br>
+                <strong>Time Complexity:</strong> <span class="math">O(n log k)</span> where n = candidates, k = top results<br>
+                <strong>Space Complexity:</strong> <span class="math">O(n)</span>
+            </div>
+
+            <h3>Ranking Logic</h3>
+            <pre>score = (edit_distance, -word_frequency)
+# Sort ascending:
+# - Smaller distance wins
+# - Higher frequency wins (-freq to reverse)</pre>
+
+            <h3>Why Min-Heap Over Full Sort?</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Time</th>
+                    <th>When to Use</th>
+                </tr>
+                <tr>
+                    <td><strong>Full Sort</strong></td>
+                    <td><span class="math">O(n log n)</span></td>
+                    <td>Need all results sorted</td>
+                </tr>
+                <tr>
+                    <td><strong>Min-Heap (Ours)</strong></td>
+                    <td><span class="math">O(n log k)</span></td>
+                    <td>k ≪ n (5 ≪ 50)</td>
+                </tr>
+            </table>
+
+            <p><strong>Example:</strong> k=5 results from n=50 candidates:<br>
+            Min-heap: 50 log₂ 5 ≈ 116 operations vs. Full sort: 50 log₂ 50 ≈ 282 ops → <strong>2.4× faster</strong></p>
+        </div>
+
+        <!-- SLIDE 8: ARCHITECTURE JUSTIFICATION -->
+        <div class="slide">
+            <h2>🏗️ Design Decisions</h2>
+
+            <h3>Why Hash Set Over Binary Search Tree?</h3>
+            <table>
+                <tr>
+                    <th>Criterion</th>
+                    <th>Hash Set</th>
+                    <th>BST</th>
+                </tr>
+                <tr>
+                    <td><strong>Lookup Time</strong></td>
+                    <td><span class="math">Θ(1)</span> avg</td>
+                    <td><span class="math">O(log n)</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Range Queries</strong></td>
+                    <td>❌ No</td>
+                    <td>✅ Yes</td>
+                </tr>
+                <tr>
+                    <td><strong>Cache Locality</strong></td>
+                    <td>Better (array)</td>
+                    <td>Worse (pointers)</td>
+                </tr>
+            </table>
+
+            <p><strong>Verdict:</strong> Hash set is optimal for membership testing. If we needed "all words starting with 'rec...'", a trie or BST would be better. But we don't.</p>
+
+            <h3>Why Min-Heap Over Quickselect?</h3>
+            <ul>
+                <li><strong>Min-Heap:</strong> <span class="math">O(n log k)</span>, simple, excellent cache performance</li>
+                <li><strong>Quickselect:</strong> <span class="math">O(n)</span> average but <span class="math">O(n²)</span> worst-case, recursion overhead</li>
+                <li><strong>Choice:</strong> Min-heap for stability and predictability</li>
+            </ul>
+        </div>
+
+        <!-- SLIDE 9: BOTTLENECK -->
+        <div class="slide">
+            <h2>🔴 Primary System Bottleneck</h2>
+
+            <div class="bottleneck">
+                <strong>⚠️ Edit Distance Computation (Stage B)</strong><br><br>
+                Profiling shows <strong>85% of runtime</strong> spent in <code>levenshtein_distance()</code>
+            </div>
+
+            <h3>Why?</h3>
+            <ul>
+                <li>Each candidate pair requires <span class="math">O(m × n)</span> character comparisons</li>
+                <li>50 candidates × comparison threshold → ~27,700 operations</li>
+                <li>All other stages are negligible (Stage A: 0.1%, Stage C: 5%)</li>
+            </ul>
+
+            <h3>🚀 Optimization Opportunities</h3>
+            <ol>
+                <li><strong>Memoization:</strong> Cache <code>levenshtein_distance("recieve", "receive")</code> results</li>
+                <li><strong>Early Termination:</strong> Stop DP if distance exceeds threshold</li>
+                <li><strong>Phonetic Pre-filtering:</strong> Use Soundex/Metaphone before DP</li>
+            </ol>
+
+            <p>These are deployment considerations that show how algorithmic analysis drives real optimization.</p>
+        </div>
+
+        <!-- SLIDE 10: LIVE DEMO -->
+        <div class="slide">
+            <h2>🎬 Example Run: "recieve"</h2>
+
+            <h3>Stage A: Dictionary Lookup</h3>
+            <pre>Is "recieve" in hash set? → No ❌
+→ Proceed to Stage B</pre>
+
+            <h3>Stage B: Candidate Generation</h3>
+            <pre>Distance 1: ["receive"] ← Found via transpose!
+Distance 2: ["believe", "perceive", ...]
+
+Levenshtein distances:
+  "recieve" vs "receive"  → 1 (one transpose)
+  "recieve" vs "believe"  → 2 (replace + transpose)
+  "recieve" vs "perceive" → 2 (replace + insert)</pre>
+
+            <h3>Stage C: Heap Ranking (top_k=3)</h3>
+            <pre>Rank 1: "receive"   (dist=1, freq=98)   ← WINNER
+Rank 2: "believe"   (dist=2, freq=45)
+Rank 3: "perceive"  (dist=2, freq=32)</pre>
+
+            <div class="success">
+                ✅ <strong>Output:</strong><br>
+                {"is_correct": false, "suggestions": ["receive", "believe", "perceive"], "confidence": "high"}
+            </div>
+
+            <p><strong>Performance:</strong> ~2ms (vs. 500ms for naive brute force) = <strong>250× speedup</strong></p>
+        </div>
+
+        <!-- SLIDE 11: SUMMARY -->
+        <div class="slide">
+            <h2>📋 Summary</h2>
+
+            <table>
+                <tr>
+                    <th>Stage</th>
+                    <th>Algorithm</th>
+                    <th>Time</th>
+                    <th>Space</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><strong>A</strong></td>
+                    <td>Hash Lookup</td>
+                    <td><span class="math">O(1)</span></td>
+                    <td><span class="math">O(V)</span></td>
+                    <td>Filter correct words</td>
+                </tr>
+                <tr>
+                    <td><strong>B</strong></td>
+                    <td>Levenshtein DP</td>
+                    <td><span class="math">O(m×n)</span></td>
+                    <td><span class="math">O(min(m,n))</span></td>
+                    <td>Generate candidates</td>
+                </tr>
+                <tr>
+                    <td><strong>C</strong></td>
+                    <td>Min-Heap</td>
+                    <td><span class="math">O(n log k)</span></td>
+                    <td><span class="math">O(n)</span></td>
+                    <td>Rank top-K</td>
+                </tr>
+            </table>
+
+            <h3 style="margin-top: 40px;">🎓 Key Takeaway</h3>
+            <p>This project demonstrates how <strong>careful algorithmic design</strong> and <strong>appropriate data structures</strong> transform a naive O(D × m × n) problem into a <strong>fast, robust, scalable</strong> system.</p>
+
+            <p style="margin-top: 30px; text-align: center; color: #667eea; font-size: 1.3em;"><strong>Thank you!</strong></p>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="controls">
+            <button onclick="previousSlide()">← Previous</button>
+            <span class="slide-counter"><span id="current-slide">1</span> / <span id="total-slides">11</span></span>
+            <button onclick="nextSlide()">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[n].classList.add('active');
+            document.getElementById('current-slide').textContent = n + 1;
+
+            // Update button states
+            document.querySelector('button:nth-of-type(1)').disabled = n === 0;
+            document.querySelector('button:nth-of-type(2)').disabled = n === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>
